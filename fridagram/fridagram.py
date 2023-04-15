@@ -42,9 +42,12 @@ class EchoThread(Thread):
             ok, rlist = receive_message(self.token)
             if ok and rlist:
                 for chat_id, text in rlist:
-                    send_message(self.token, [chat_id], "You wrote : " + text)
                     if text == "exit":
                         self.running = False
+                        answer = "You write 'exit', therefore exiting ..."
+                    else:
+                        answer = "You wrote : " + text
+                    send_message(self.token, [chat_id], answer)
             # print(ok, rlist)
             # print("-" * 30)
             time.sleep(0.1)
@@ -138,9 +141,7 @@ def clear_bot(token):
         return False
 
 
-print(__name__)
-
-if __name__ == "__main__":
+def start():
     print("servas")
     setproctitle("drifg." + os.path.basename(__file__))
 

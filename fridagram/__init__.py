@@ -1,0 +1,1 @@
+from .fridagram import *

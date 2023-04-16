@@ -13,7 +13,7 @@ import time
 import sys
 
 __version__ = "0.1.5"
-motd = "fridagram " + __version__ + " started!"
+motd = "fridagram " + __version__ + " started!\nExit with /exit"
 
 
 def whoami():
@@ -89,10 +89,11 @@ def get_updates(token, offset=0):
     return json.loads(answer.content)
 
 
-def receive_message(token):
+def receive_message(token, timeout=30):
     try:
         answer = requests.get(
-            f"https://api.telegram.org/bot{token}/getUpdates")
+            f"https://api.telegram.org/bot{token}/getUpdates?timeout={timeout}"
+        )
         r = json.loads(answer.content)
         if r["ok"] and r["result"]:
             rlist = [(r0["message"]["chat"]["id"], r0["message"]["text"])

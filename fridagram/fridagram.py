@@ -17,18 +17,17 @@ motd = "fridagram " + __version__ + " started!\nExit with /exit"
 
 
 def whoami():
-    outer_func_name = str(
-        inspect.getouterframes(inspect.currentframe())[1].function)
+    outer_func_name = str(inspect.getouterframes(inspect.currentframe())[1].function)
     outer_func_linenr = str(inspect.currentframe().f_back.f_lineno)
     return outer_func_name + " / #" + outer_func_linenr + ": "
 
 
 class EchoThread(Thread):
-
-    def __init__(self, token):
+    def __init__(self, token, logger):
         Thread.__init__(self)
         self.token = token
         self.running = False
+        self.logger = logger
         self.stopped = False
 
     def stop(self):
@@ -37,21 +36,37 @@ class EchoThread(Thread):
             time.sleep(0.05)
 
     def run(self):
-        ok = True
-        self.running = True
-        while ok and self.running:
-            ok, rlist = receive_message(self.token)
-            if ok and rlist:
-                for chat_id, text in rlist:
-                    if text == "/exit":
+        self.logger.info("Sending first getme - heartbeat to bot ...")
+        heartbeat_answer = get_me(self.token)
+        if not heartbeat_answer:
+            self.logger.error("Received no answer on first getme, exiting ...")
+            self.running = False
+        else:
+            self.logger.info("Received answer on first getme: " + str(heartbeat_answer))
+            self.running = True
+            lastt0 = time.time()
+            while self.running:
+                ok, rlist = receive_message(self.token)
+                if ok and rlist:
+                    for chat_id, text in rlist:
+                        if text == "/exit":
+                            self.running = False
+                            answer = "You write 'exit', therefore exiting ..."
+                        else:
+                            answer = "You wrote : " + text
+                        send_message(self.token, [chat_id], answer)
+                elif time.time() - lastt0 > 15:
+                    self.logger.info("Sending getme - heartbeat to bot ...")
+                    heartbeat_answer = get_me(self.token)
+                    if not heartbeat_answer:
+                        self.logger.error("Received no answer on getme, exiting ...")
                         self.running = False
-                        answer = "You write 'exit', therefore exiting ..."
                     else:
-                        answer = "You wrote : " + text
-                    send_message(self.token, [chat_id], answer)
-            # print(ok, rlist)
-            # print("-" * 30)
-            time.sleep(0.1)
+                        self.logger.info(
+                            "Received answer on getme: " + str(heartbeat_answer)
+                        )
+                        lastt0 = time.time()  #
+                time.sleep(0.1)
         self.stopped = True
 
 
@@ -82,22 +97,31 @@ def get_updates(token, offset=0):
             answer = requests.get(urlstr)
         else:
             urlstr = f"https://api.telegram.org/bot{token}/getUpdates"
-            answer = requests.get(
-                f"https://api.telegram.org/bot{token}/getUpdates")
+            answer = requests.get(f"https://api.telegram.org/bot{token}/getUpdates")
     except Exception:
         return {"ok": False, "result": []}
     return json.loads(answer.content)
 
 
-def receive_message(token, timeout=30):
+def get_me(token):
+    try:
+        answer = requests.get(f"https://api.telegram.org/bot{token}/getme")
+        return answer
+    except Exception:
+        return None
+
+
+def receive_message(token, timeout=45):
     try:
         answer = requests.get(
             f"https://api.telegram.org/bot{token}/getUpdates?timeout={timeout}"
         )
         r = json.loads(answer.content)
         if r["ok"] and r["result"]:
-            rlist = [(r0["message"]["chat"]["id"], r0["message"]["text"])
-                     for r0 in r["result"]]
+            rlist = [
+                (r0["message"]["chat"]["id"], r0["message"]["text"])
+                for r0 in r["result"]
+            ]
             offset = int(r["result"][-1]["update_id"] + 1)
             urlstr = (
                 f"https://api.telegram.org/bot{token}/getUpdates?offset={str(offset)}"
@@ -114,14 +138,14 @@ def receive_message(token, timeout=30):
 
 
 def send_file_as_photo(token, chatids, file_opened, photo_caption):
-    '''r = send_file_as_photo(self.token, [chat_id],
-                        open("/path/to/file.jpg", "rb"),
-                        "test")'''
-    url = f'https://api.telegram.org/bot{token}/sendPhoto'
+    """r = send_file_as_photo(self.token, [chat_id],
+    open("/path/to/file.jpg", "rb"),
+    "test")"""
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
     resultlist = []
-    files = {'photo': file_opened}
+    files = {"photo": file_opened}
     for c in chatids:
-        params = {'chat_id': c, "caption": photo_caption}
+        params = {"chat_id": c, "caption": photo_caption}
         try:
             message = requests.post(url, params, files=files)
         except Exception:
@@ -131,13 +155,13 @@ def send_file_as_photo(token, chatids, file_opened, photo_caption):
 
 
 def send_url_as_photo(token, chatids, photo_url, photo_caption):
-    '''r = send_url_as_photo(self.token, [chat_id],
-                    "https://url/file.jpg",
-                    "test")'''
-    url = f'https://api.telegram.org/bot{token}/sendPhoto'
+    """r = send_url_as_photo(self.token, [chat_id],
+    "https://url/file.jpg",
+    "test")"""
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
     resultlist = []
     for c in chatids:
-        payload = {'chat_id': c, 'photo': photo_url, 'caption': photo_caption}
+        payload = {"chat_id": c, "photo": photo_url, "caption": photo_caption}
         try:
             message = requests.post(url, json=payload)
         except Exception:
@@ -184,9 +208,10 @@ def start():
     # Init Logger
     logger = logging.getLogger("dh")
     logger.setLevel(logging.INFO)
-    fh = logging.FileHandler(maindir + "drifgram.log", mode="w")
+    fh = logging.FileHandler(maindir + "fridagram.log", mode="w")
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     logger.info(whoami() + motd)
@@ -202,7 +227,7 @@ def start():
 
     r, ok = send_message(cfg0.token, cfg0.chatids, motd)
 
-    echobot = EchoThread(cfg0.token)
+    echobot = EchoThread(cfg0.token, logger)
     echobot.start()
 
     while echobot.running:

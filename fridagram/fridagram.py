@@ -127,14 +127,13 @@ def receive_message(token, timeout=45):
                 f"https://api.telegram.org/bot{token}/getUpdates?offset={str(offset)}"
             )
             _ = requests.get(urlstr)
-            return True, rlist
+            return True, rlist, ""
         elif r["ok"] and not r["result"]:
-            return True, []
+            return True, [], ""
         else:
-            return False, []
+            return False, [], ""
     except Exception as e:
-        print(str(e))
-        return False, []
+        return False, [], str(e)
 
 
 def send_file_as_photo(token, chatids, file_opened, photo_caption):

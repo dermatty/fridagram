@@ -142,16 +142,32 @@ def send_file_as_photo(token, chatids, file_opened, photo_caption):
     "test")"""
     url = f"https://api.telegram.org/bot{token}/sendPhoto"
     resultlist = []
-    files = {"photo": file_opened}
     for c in chatids:
+        file0_opened = file_opened.copy()
+        files = {"photo": file0_opened}
         params = {"chat_id": c, "caption": photo_caption}
         try:
             message = requests.post(url, params, files=files)
-        except Exception:
-            return False, {"ok": False, "result": []}
-        resultlist.append(json.loads(message.content))
+            resultlist.append(json.loads(message.content))
+        except Exception as e:
+            resultlist.append((False,{"ok": False, "result": str(e)}))
     return True, resultlist
 
+def send_filepath_as_photo(token, chatids, photo_path, photo_caption):
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
+    resultlist = []
+    for c in chatids:
+        params = {"chat_id": c, "caption": photo_caption}
+        try:
+            file_opened = open(photo_path, "rb")
+            file0 = {"photo": file_opened}
+            message = requests.post(url, params, files=file0)
+            file_opened.close()
+            resultlist.append(json.loads(message.content))
+        except Exception as e:
+            resultlist.append((False,{"ok": False, "result": str(e)}))
+        resultlist.append(json.loads(message.content))
+    return True, resultlist
 
 def send_url_as_photo(token, chatids, photo_url, photo_caption):
     """r = send_url_as_photo(self.token, [chat_id],

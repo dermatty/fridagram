@@ -189,8 +189,7 @@ def clear_bot(token):
         return True
     try:
         rlast = int(r["result"][-1]["update_id"] + 1)
-        r = get_updates(token, offset=str(rlast))
-        print("cleared!", rlast)
+        r = get_updates(token, offset=int(rlast))
         return r
     except Exception:
         return False

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fridagram"
-version = "0.1.10"
+version = "0.1.11"
 description = ""
 authors = ["dermatty <stephan@untergrabner.at>"]
 readme = "README.md"

@@ -90,7 +90,7 @@ def read_config(cfg_file, logger):
 
 def get_updates(token, offset=0):
     try:
-        if int(offset) > 0:
+        if int(offset) != 0:
             urlstr = (
                 f"https://api.telegram.org/bot{token}/getUpdates?offset={str(offset)}"
             )
@@ -181,7 +181,7 @@ def send_message(token, chatids, text):
 
 
 def clear_bot(token):
-    r = get_updates(token)
+    r = get_updates(token, offset=-1)
     if not r["ok"]:
         return False
     if not r["result"]:
@@ -193,6 +193,7 @@ def clear_bot(token):
         return r
     except Exception:
         return False
+
 
 
 def start():

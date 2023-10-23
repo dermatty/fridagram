@@ -95,10 +95,11 @@ def get_updates(token, offset=0):
                 f"https://api.telegram.org/bot{token}/getUpdates?offset={str(offset)}"
             )
             answer = requests.get(urlstr)
+            print(answer)
         else:
             urlstr = f"https://api.telegram.org/bot{token}/getUpdates"
             answer = requests.get(f"https://api.telegram.org/bot{token}/getUpdates")
-    except Exception:
+    except Exception as e:
         return {"ok": False, "result": []}
     return json.loads(answer.content)
 

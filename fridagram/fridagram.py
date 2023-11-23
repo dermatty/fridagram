@@ -115,7 +115,8 @@ def get_me(token):
 def receive_message(token, timeout=45):
     try:
         answer = requests.get(
-            f"https://api.telegram.org/bot{token}/getUpdates?timeout={timeout}"
+            f"https://api.telegram.org/bot{token}/getUpdates?timeout={timeout}",
+            timeout=timeout+5
         )
         r = json.loads(answer.content)
         if r["ok"] and r["result"]:

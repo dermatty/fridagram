@@ -199,6 +199,7 @@ def clear_bot(token):
 
 
 def start():
+
     setproctitle("drifg." + os.path.basename(__file__))
 
     userhome = expanduser("~")
@@ -221,10 +222,12 @@ def start():
         if not ret:
             raise Exception(cfg0)
     except Exception as e:
+        print(str(e))
         logger.error(whoami() + str(e))
         sys.exit()
 
     r, ok = send_message(cfg0.token, cfg0.chatids, motd)
+
 
     echobot = EchoThread(cfg0.token, logger)
     echobot.start()

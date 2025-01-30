@@ -12,7 +12,7 @@ import requests
 import time
 import sys
 
-__version__ = "0.1.5"
+__version__ = "0.1.16"
 motd = "fridagram " + __version__ + " started!\nExit with /exit"
 
 
